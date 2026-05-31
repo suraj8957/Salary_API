@@ -1,6 +1,6 @@
 spring:
   cassandra:
-    keyspace-name: employee_db
+    keyspace-name: salary_keyspace
     contact-points: 127.0.0.1
     port: 9042
     username: scylladb

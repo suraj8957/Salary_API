@@ -7,7 +7,7 @@ import java.util.UUID;
 import org.springframework.data.cassandra.repository.CassandraRepository;
 import org.springframework.data.cassandra.repository.Query;
 
-public interface EmployeeRepository extends CassandraRepository<Employee, UUID> {
+public interface EmployeeRepository extends CassandraRepository<Employee, String> {
 
     @Query("SELECT * FROM employee_salary WHERE id = ?0")
     Employee findByIdAsString(String id);
