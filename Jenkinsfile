@@ -37,9 +37,20 @@ pipeline {
 
         stage('Trivy Dependency Scan') {
             steps {
-                sh 'trivy fs .'
+                sh 'trivy fs --severity HIGH,CRITICAL .'
             }
         }
 
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t salary-api:v1 .'
+            }
+        }
+
+        stage('Trivy Image Scan') {
+            steps {
+                sh 'trivy image --severity HIGH,CRITICAL salary-api:v1'
+            }
+        }
     }
 }
