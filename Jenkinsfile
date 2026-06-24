@@ -8,32 +8,14 @@ pipeline {
                 sh '''
                 echo "===== OWASP ZAP ====="
 
-                echo "Checking ZAP Binary..."
                 zap.sh -version || true
-
-                echo "Checking zap-baseline.py..."
-                zap-baseline.py -h || true
-
-                echo "Checking ZAP Path..."
                 which zap.sh || true
-
-                echo "Searching zap-baseline.py..."
-                find / -name "zap-baseline.py" 2>/dev/null || true
-
-                echo "Listing ZAP Installation Directory..."
-                ls -l $(dirname $(which zap.sh)) || true
 
                 echo "===== Docker ====="
                 docker --version || true
 
-                echo "===== Kubectl ====="
-                kubectl version --client || true
-
                 echo "===== AWS CLI ====="
                 aws --version || true
-
-                echo "===== Eksctl ====="
-                eksctl version || true
                 '''
             }
         }
@@ -53,9 +35,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    withCredentials([
-                        string(credentialsId: 's-sonar-token', variable: 'SONAR_TOKEN')
-                    ]) {
+                    withCredentials([string(credentialsId: 's-sonar-token', variable: 'SONAR_TOKEN')]) {
                         sh '''
                         mvn sonar:sonar \
                         -Dsonar.projectKey=salary-api \
@@ -121,18 +101,18 @@ pipeline {
                 docker pull ghcr.io/zaproxy/zaproxy:stable
 
                 docker run --rm \
-                -u $(id -u):$(id -g) \
-                -v "$PWD/zap-report:/zap/wrk:rw" \
+                --user root \
+                -v "$PWD/zap-report:/zap/wrk" \
                 ghcr.io/zaproxy/zaproxy:stable \
                 zap-baseline.py \
                 -t http://13.203.21.160:30080 \
                 -r zap-report.html \
-                -I
+                -I || true
 
-                echo "===== Report Generated ====="
+                chmod -R 777 zap-report || true
 
-                ls -lh zap-report
-                ls -lh zap-report/zap-report.html || true
+                echo "===== Report Files ====="
+                ls -lah zap-report || true
                 '''
             }
         }
