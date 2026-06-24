@@ -6,10 +6,23 @@ pipeline {
         stage('Check Tools') {
             steps {
                 sh '''
+                echo "===== OWASP ZAP ====="
+
                 echo "Checking ZAP Binary..."
                 zap.sh -version || true
+
+                echo "Checking zap-baseline.py..."
                 zap-baseline.py -h || true
-                
+
+                echo "Checking ZAP Path..."
+                which zap.sh || true
+
+                echo "Searching zap-baseline.py..."
+                find / -name "zap-baseline.py" 2>/dev/null || true
+
+                echo "Listing ZAP Installation Directory..."
+                ls -l $(dirname $(which zap.sh)) || true
+
                 echo "===== Docker ====="
                 docker --version || true
 
