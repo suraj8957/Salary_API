@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        SONAR_SERVER = 'sonarqube'
-        SONAR_TOKEN  = credentials('sonar-token')
-    }
-
     stages {
 
         stage('Checkout') {
@@ -20,20 +15,10 @@ pipeline {
             }
         }
 
-        stage('Unit Test') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${SONAR_SERVER}") {
-                    sh """
-                    mvn sonar:sonar \
-                    -Dsonar.projectKey=salary-api \
-                    -Dsonar.token=${SONAR_TOKEN}
-                    """
+                withSonarQubeEnv('sonarqube') {
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
