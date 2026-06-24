@@ -83,7 +83,7 @@ pipeline {
                     sh '''
                     echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-                    docker tag salary-api:v2 $DOCKER_USER/salary-api:v2
+                    docker tag salary-api:v2 $DOCKER_USER/salary-api:v3
 
                     docker push $DOCKER_USER/salary-api:v2
                     '''
