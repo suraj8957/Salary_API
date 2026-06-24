@@ -108,12 +108,19 @@ pipeline {
             }
         }
 
-        stage('Check Application') {
+        stage('OWASP ZAP Scan') {
             steps {
                 sh '''
-                echo "===== Checking Application ====="
+                echo "===== Running OWASP ZAP Scan ====="
 
-                curl -I http://13.203.21.160:30080/actuator/health
+                /opt/zaproxy/zap.sh \
+                -cmd \
+                -quickurl http://13.203.21.160:30080 \
+                -quickout zap-report.html
+
+                echo "===== Report Generated ====="
+
+                ls -lh zap-report.html
                 '''
             }
         }
