@@ -111,18 +111,36 @@ pipeline {
         stage('OWASP ZAP Scan') {
             steps {
                 sh '''
-                echo "===== Running OWASP ZAP Scan ====="
+                echo "===== Running OWASP ZAP Baseline Scan ====="
 
-                /opt/zaproxy/zap.sh \
-                -cmd \
-                -quickurl http://13.203.21.160:30080 \
-                -quickout zap-report.html
+                docker pull ghcr.io/zaproxy/zaproxy:stable
+
+                docker run --rm \
+                -v "$PWD:/zap/wrk:rw" \
+                ghcr.io/zaproxy/zaproxy:stable \
+                zap-baseline.py \
+                -t http://13.203.21.160:30080 \
+                -r zap-report.html \
+                -I
 
                 echo "===== Report Generated ====="
 
-                ls -lh zap-report.html
+                ls -lh zap-report.html || true
                 '''
             }
+        }
+    }
+
+    post {
+        always {
+            publishHTML([
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: '.',
+                reportFiles: 'zap-report.html',
+                reportName: 'OWASP ZAP Report'
+            ])
         }
     }
 }
