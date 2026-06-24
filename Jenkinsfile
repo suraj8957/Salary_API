@@ -1,76 +1,97 @@
 pipeline {
-    agent any
+agent any
 
-    stages {
+```
+stages {
 
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
+    stage('Check Tools') {
+        steps {
+            sh '''
+            echo "===== Docker ====="
+            docker --version || true
+
+            echo "===== Kubectl ====="
+            kubectl version --client || true
+
+            echo "===== AWS CLI ====="
+            aws --version || true
+
+            echo "===== Eksctl ====="
+            eksctl version || true
+            '''
         }
+    }
 
-        stage('Compile') {
-            steps {
-                sh 'mvn clean compile'
-            }
+    stage('Checkout') {
+        steps {
+            checkout scm
         }
+    }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    withCredentials([string(credentialsId: 's-sonar-token', variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                        mvn sonar:sonar \
-                        -Dsonar.projectKey=salary-api \
-                        -Dsonar.login=$SONAR_TOKEN
-                        '''
-                    }
-                }
-            }
+    stage('Compile') {
+        steps {
+            sh 'mvn clean compile'
         }
+    }
 
-        stage('Package') {
-            steps {
-                sh 'mvn clean package -DskipTests'
-            }
-        }
-
-        stage('Trivy Dependency Scan') {
-            steps {
-                sh 'trivy fs --severity HIGH,CRITICAL .'
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                sh 'docker build -t salary-api:v1 .'
-            }
-        }
-
-        stage('Trivy Image Scan') {
-            steps {
-                sh 'trivy image --severity HIGH,CRITICAL salary-api:v1'
-            }
-        }
-
-        stage('Docker Push') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 's-dockerhub-token',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
+    stage('SonarQube Analysis') {
+        steps {
+            withSonarQubeEnv('SonarQube') {
+                withCredentials([string(credentialsId: 's-sonar-token', variable: 'SONAR_TOKEN')]) {
                     sh '''
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-
-                    docker tag salary-api:v1 $DOCKER_USER/salary-api:v1
-
-                    docker push $DOCKER_USER/salary-api:v1
+                    mvn sonar:sonar \
+                    -Dsonar.projectKey=salary-api \
+                    -Dsonar.login=$SONAR_TOKEN
                     '''
                 }
             }
         }
     }
+
+    stage('Package') {
+        steps {
+            sh 'mvn clean package -DskipTests'
+        }
+    }
+
+    stage('Trivy Dependency Scan') {
+        steps {
+            sh 'trivy fs --severity HIGH,CRITICAL .'
+        }
+    }
+
+    stage('Docker Build') {
+        steps {
+            sh 'docker build -t salary-api:v1 .'
+        }
+    }
+
+    stage('Trivy Image Scan') {
+        steps {
+            sh 'trivy image --severity HIGH,CRITICAL salary-api:v1'
+        }
+    }
+
+    stage('Docker Push') {
+        steps {
+            withCredentials([
+                usernamePassword(
+                    credentialsId: 's-dockerhub-token',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )
+            ]) {
+                sh '''
+                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+                docker tag salary-api:v1 $DOCKER_USER/salary-api:v1
+
+                docker push $DOCKER_USER/salary-api:v1
+                '''
+            }
+        }
+    }
+}
+```
+
 }
