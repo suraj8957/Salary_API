@@ -61,13 +61,13 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t salary-api:v1 .'
+                sh 'docker build -t salary-api:v2 .'
             }
         }
 
         stage('Trivy Image Scan') {
             steps {
-                sh 'trivy image --severity HIGH,CRITICAL salary-api:v1'
+                sh 'trivy image --severity HIGH,CRITICAL salary-api:v2'
             }
         }
 
@@ -83,9 +83,9 @@ pipeline {
                     sh '''
                     echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-                    docker tag salary-api:v1 $DOCKER_USER/salary-api:v1
+                    docker tag salary-api:v2 $DOCKER_USER/salary-api:v2
 
-                    docker push $DOCKER_USER/salary-api:v1
+                    docker push $DOCKER_USER/salary-api:v2
                     '''
                 }
             }
