@@ -52,5 +52,25 @@ pipeline {
                 sh 'trivy image --severity HIGH,CRITICAL salary-api:v1'
             }
         }
+
+        stage('Docker Push') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 's-dockerhub-token',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+                    docker tag salary-api:v1 $DOCKER_USER/salary-api:v1
+
+                    docker push $DOCKER_USER/salary-api:v1
+                    '''
+                }
+            }
+        }
     }
 }
