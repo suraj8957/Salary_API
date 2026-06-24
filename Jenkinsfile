@@ -6,6 +6,10 @@ pipeline {
         stage('Check Tools') {
             steps {
                 sh '''
+                echo "Checking ZAP Binary..."
+                zap.sh -version || true
+                zap-baseline.py -h || true
+                
                 echo "===== Docker ====="
                 docker --version || true
 
