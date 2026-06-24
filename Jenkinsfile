@@ -53,7 +53,9 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    withCredentials([string(credentialsId: 's-sonar-token', variable: 'SONAR_TOKEN')]) {
+                    withCredentials([
+                        string(credentialsId: 's-sonar-token', variable: 'SONAR_TOKEN')
+                    ]) {
                         sh '''
                         mvn sonar:sonar \
                         -Dsonar.projectKey=salary-api \
@@ -108,15 +110,19 @@ pipeline {
             }
         }
 
-        stage('OWASP ZAP Scan') {
+        stage('DAST') {
             steps {
                 sh '''
                 echo "===== Running OWASP ZAP Baseline Scan ====="
 
+                mkdir -p zap-report
+                chmod -R 777 zap-report
+
                 docker pull ghcr.io/zaproxy/zaproxy:stable
 
                 docker run --rm \
-                -v "$PWD:/zap/wrk:rw" \
+                -u $(id -u):$(id -g) \
+                -v "$PWD/zap-report:/zap/wrk:rw" \
                 ghcr.io/zaproxy/zaproxy:stable \
                 zap-baseline.py \
                 -t http://13.203.21.160:30080 \
@@ -125,7 +131,8 @@ pipeline {
 
                 echo "===== Report Generated ====="
 
-                ls -lh zap-report.html || true
+                ls -lh zap-report
+                ls -lh zap-report/zap-report.html || true
                 '''
             }
         }
@@ -133,11 +140,11 @@ pipeline {
 
     post {
         always {
-            publishHTML([
+            publishHTML(target: [
                 allowMissing: true,
                 alwaysLinkToLastBuild: true,
                 keepAll: true,
-                reportDir: '.',
+                reportDir: 'zap-report',
                 reportFiles: 'zap-report.html',
                 reportName: 'OWASP ZAP Report'
             ])
