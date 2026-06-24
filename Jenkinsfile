@@ -107,5 +107,15 @@ pipeline {
                 }
             }
         }
+
+        stage('Check Application') {
+            steps {
+                sh '''
+                echo "===== Checking Application ====="
+
+                curl -I http://13.203.21.160:30080/actuator/health
+                '''
+            }
+        }
     }
 }
